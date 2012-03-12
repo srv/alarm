@@ -1,0 +1,9 @@
+<launch>
+
+  <node pkg="alarm" type="alarm" name="emergency_alarm_node" output="screen">
+
+    <param name="tolerance" value="1500" type="int32" />
+
+  </node>
+
+</launch>
