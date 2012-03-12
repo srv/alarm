@@ -23,7 +23,7 @@ from the absolute reading (in psi) given by the pressure sensor included in the 
 #include <srv_msgs/WaterIn.h> // it is necessary to include the packages containing these
 // messages in the manifest.xml. Otherwise they wont be found.
 #include <srv_msgs/emergency_alarm.h>
-#include <alarm.h>
+#include <alarm/alarm.h>
 #include <sstream>
  
 
@@ -36,9 +36,9 @@ void alarmCallback(const srv_msgs::WaterIn::ConstPtr& msg) // wait for a message
 	humid=msg->humidity;
 	if (humid>tolerance){
 	alarm_msg.status=true; //activate alarm
-	ROS_INFO("Humidity too high activate alarm !!: [%f]", msg->humidity); // log the alarm message
+	ROS_INFO("Humidity too high activate alarm !!: [%i]", msg->humidity); // log the alarm message
 	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is published
-	switch_PCOff(); // humidity has been detected inside the cilinder, it has been published the corresponding topic and logged the corresponding message and now the computer must be switched off. 
+//	switch_PCOff(); // humidity has been detected inside the cilinder, it has been published the corresponding topic and logged the corresponding message and now the computer must be switched off. 
 	}
    
 }
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 
 node.param("tolerance", tolerance, 1500); // param name, variable that will contain the param value, default value. 
 
-     ros::Subscriber sub = node.subscribe("humidity", 1, AlarmCallback);
+     ros::Subscriber sub = node.subscribe("humidity", 1, alarmCallback);
      alarm_pub = node.advertise<srv_msgs::emergency_alarm>("emergency_alarm", 1);
      // we publish a topic 'emergency' which is a message type srv_msg::emergency_alarm through the object publisher alarm_pub
      ros::spin(); // enters in a infinite loop waiting for message humidity and
