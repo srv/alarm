@@ -14,5 +14,6 @@
 #ifndef alarm_H
 #define alarm_H
 
-int tolerance; // level at which the alarm is activated.  
+int tolerance; // level at which the alarm is activated. 
+string actions; // shell to be executed when the alarm activates 
 #endif 

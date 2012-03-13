@@ -37,13 +37,23 @@ void alarmCallback(const srv_msgs::WaterIn::ConstPtr& msg) // wait for a message
 	printf("humitat: %i; tolerance: %i",humid, tolerance);
 	if (humid>tolerance){
 	alarm_msg.status=true; //activate alarm
-        printf("humidity too high activate alarm");
-	ROS_INFO("Humidity too high activate alarm !!: [%i]", msg->humidity); // log the alarm message
-	
 	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is published
-//	switch_PCOff(); // humidity has been detected inside the cilinder, it has been published the corresponding topic and logged the corresponding message and now the computer must be switched off. 
+        ROS_INFO("Humidity too high activate alarm !!: [%i]", msg->humidity); // log the alarm message
+	cout << "Humidity too high activate alarm. Actions script is : " << actions << endl;
+	performActionsCall(fout,actions); // humidity has been detected inside the cilinder, it has been published the corresponding topic and logged the corresponding message and now the computer must be switched off. 
+	}else{
+	alarm_msg.status=false; //status humidity sensor ok, no alarm
+   	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is published
 	}
-   
+}
+
+void performActionsCall(ostream& out, const string& actions)
+{
+  ROS_INFO("System shut down for security. Integrity Alarm !!"); // log the alarm message
+  ostringstream ss(actions,ios_base::ate);
+  out << "System call to '" << ss.str() << "'" << endl; // message shows the shell to be run
+  int res = system(ss.str().c_str()); // run the shell
+  out << "System call returned " << res << endl; //result of the execution is a number stored in "res". 0 if ok. 
 }
 
 
@@ -90,6 +100,8 @@ int main(int argc, char **argv)
 	//node "motor_board_node_base"
 
 node.param("tolerance", tolerance, 1500); // param name, variable that will contain the param value, default value. 
+node.param("actions", actions,"/home/user/waterinmonitor/init/waterinactions.sh")
+
 
      ros::Subscriber sub = node.subscribe("humidity", 1, alarmCallback);
      alarm_pub = node.advertise<srv_msgs::emergency_alarm>("emergency_alarm", 1);
