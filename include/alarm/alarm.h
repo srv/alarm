@@ -11,9 +11,13 @@
  * The status of the alarm is continuously published at low freqüency in the tpic emergency_alarm, which must be periodically checked. 
  */
 
-#ifndef alarm_H
-#define alarm_H
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <cstdlib>
+#include <string>
+#include <string.h>   // Required by strcpy()
 
-int tolerance; // level at which the alarm is activated. 
-string actions; // shell to be executed when the alarm activates 
-#endif 
+//int tolerance; // level at which the alarm is activated. 
+//const string actions; // shell to be executed when the alarm activates 
+ 

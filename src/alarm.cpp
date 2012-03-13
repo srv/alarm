@@ -23,11 +23,27 @@ from the absolute reading (in psi) given by the pressure sensor included in the 
 #include <srv_msgs/WaterIn.h> // it is necessary to include the packages containing these
 // messages in the manifest.xml. Otherwise they wont be found.
 #include <srv_msgs/emergency_alarm.h>
-#include <alarm/alarm.h>
 #include <sstream>
- 
+#include <alarm/alarm.h>
+
+using namespace std;
+
+//global variables
+int tolerance; 
+string actions;
+
 
 ros::Publisher alarm_pub; // declare the publisher in global mode
+
+void performActionsCall(const string& actions)
+{
+  ROS_INFO("System shut down for security. Integrity Alarm !!"); // log the alarm message
+  ostringstream ss(actions,ios_base::ate);
+  //out << "System call to '" << ss.str() << "'" << endl; // message shows the shell to be run
+  int res = system(ss.str().c_str()); // run the shell
+  printf("System Call return: %i", res);
+  //out << "System call returned " << res << endl; //result of the execution is a number stored in "res". 0 if ok. 
+}
 
 void alarmCallback(const srv_msgs::WaterIn::ConstPtr& msg) // wait for a message type WaterIn and create the pointer to it
 {
@@ -39,22 +55,16 @@ void alarmCallback(const srv_msgs::WaterIn::ConstPtr& msg) // wait for a message
 	alarm_msg.status=true; //activate alarm
 	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is published
         ROS_INFO("Humidity too high activate alarm !!: [%i]", msg->humidity); // log the alarm message
-	cout << "Humidity too high activate alarm. Actions script is : " << actions << endl;
-	performActionsCall(fout,actions); // humidity has been detected inside the cilinder, it has been published the corresponding topic and logged the corresponding message and now the computer must be switched off. 
+	cout << "Humidity too high, activate alarm. Actions script is : " << actions << endl;	
+//printf("Humidity too high, activate alarm. Actions script is : %s", actions);
+	performActionsCall(actions); // humidity has been detected inside the cilinder, it has been published the corresponding topic and logged the corresponding message and now the computer must be switched off. 
 	}else{
 	alarm_msg.status=false; //status humidity sensor ok, no alarm
    	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is published
 	}
 }
 
-void performActionsCall(ostream& out, const string& actions)
-{
-  ROS_INFO("System shut down for security. Integrity Alarm !!"); // log the alarm message
-  ostringstream ss(actions,ios_base::ate);
-  out << "System call to '" << ss.str() << "'" << endl; // message shows the shell to be run
-  int res = system(ss.str().c_str()); // run the shell
-  out << "System call returned " << res << endl; //result of the execution is a number stored in "res". 0 if ok. 
-}
+
 
 
 int main(int argc, char **argv)
@@ -70,14 +80,13 @@ int main(int argc, char **argv)
       * part of the ROS system.
       */
      ros::init(argc, argv, "emergency_alarm");
-   
+  
      /**
       * NodeHandle is the main access point to communications with the ROS system.
       * The first NodeHandle constructed will fully initialize this node, and the last
       * NodeHandle destructed will close down the node.
       */
      ros::NodeHandle node;
-   
      /**
       * The advertise() function is how you tell ROS that you want to
       * publish on a given topic name. This invokes a call to the ROS
@@ -100,7 +109,7 @@ int main(int argc, char **argv)
 	//node "motor_board_node_base"
 
 node.param("tolerance", tolerance, 1500); // param name, variable that will contain the param value, default value. 
-node.param("actions", actions,"/home/user/waterinmonitor/init/waterinactions.sh")
+node.param<string>("actions", actions,"/home/user/waterinmonitor/init/waterinactions.sh");
 
 
      ros::Subscriber sub = node.subscribe("humidity", 1, alarmCallback);
