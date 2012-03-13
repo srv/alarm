@@ -34,9 +34,12 @@ void alarmCallback(const srv_msgs::WaterIn::ConstPtr& msg) // wait for a message
     int humid;
     srv_msgs::emergency_alarm alarm_msg; // create a message type emergency_alarm called alarm_msg
 	humid=msg->humidity;
+	printf("humitat: %i; tolerance: %i",humid, tolerance);
 	if (humid>tolerance){
 	alarm_msg.status=true; //activate alarm
+        printf("humidity too high activate alarm");
 	ROS_INFO("Humidity too high activate alarm !!: [%i]", msg->humidity); // log the alarm message
+	
 	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is published
 //	switch_PCOff(); // humidity has been detected inside the cilinder, it has been published the corresponding topic and logged the corresponding message and now the computer must be switched off. 
 	}
