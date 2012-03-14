@@ -6,7 +6,7 @@
  * @par Advertises
  *
  * - @b emergency_alarm (srv_msgs/emergency_alarm)
- *   alarm_on=true if an emergency has occurrend and the pc must be turn off (water in, battery off, etc...)
+ *   status=true if an emergency has occurrend and the pc must be turn off (water in, battery off, etc...)
  *   
  * @par Subscribes
  *      * - @b humidity topic (srv_msgs/WaterIn.humidity) 
@@ -26,11 +26,16 @@ using namespace std;
 //global variables
 int tolerance; 
 string actions;
+bool publish_alarm=false;
+double frequency;
+double period;
 
 
 ros::Publisher alarm_pub; // declare the publisher in global mode
 
 /** performActionsCall Run actions when the humidity alarm is launched.
+ * @param tolerance Humidity values higher than the tolerance will cause the alarm activation (status=true)
+ * @param status_publish_frequency Frequency of status publication. 
  * @param actions The shell to be executed. It is configured in the alarm.launch file
  */
 void performActionsCall(const string& actions)
@@ -43,6 +48,16 @@ void performActionsCall(const string& actions)
   //out << "System call returned " << res << endl; //result of the execution is a number stored in "res". 0 if ok. 
 }
 
+
+
+/** timerClb timer service rutine: puts the global variable "publish_alarm" to true at
+ * the configured frequency.  
+ */
+void timerClb(const ros::TimerEvent& event){
+publish_alarm=true;
+}
+
+
 /** alarmCallback. Wait for a message type WaterIn. Evaluate the humidity value and call performActions if it exceeds the tolerance value
  * @param msg WaterIn message 
  */
@@ -54,17 +69,18 @@ void alarmCallback(const srv_msgs::WaterIn::ConstPtr& msg)
 	//printf("humitat: %i; tolerance: %i",humid, tolerance);
 	if (humid>tolerance){
 	alarm_msg.status=true; //activate alarm
-	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is published
+	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is immediatly published
         ROS_INFO("Humidity too high activate alarm !!: [%i]", msg->humidity); // log the alarm message
 	cout << "Humidity too high, activate alarm. Actions script is : " << actions << endl;	
         performActionsCall(actions); // humidity has been detected inside the cilinder, it has been published the corresponding topic and logged the corresponding message and now the computer must be switched off. 
 	}else{
 	alarm_msg.status=false; //status humidity sensor ok, no alarm
-   	alarm_pub.publish(alarm_msg); // the message type emergency_alarm is published
+		if (publish_alarm){   	
+	           alarm_pub.publish(alarm_msg);
+			publish_alarm=false;			
+			} // status ok is published at the configured frequency 
 	}
 }
-
-
 
 
 int main(int argc, char **argv)
@@ -111,14 +127,18 @@ int main(int argc, char **argv)
 
 node.param("tolerance", tolerance, 1500); // param name, variable that will contain the param value, default value. 
 node.param<string>("actions", actions,"/home/user/waterinmonitor/init/waterinactions.sh");
-
+node.param("status_publish_frequency", frequency, 0.5); // freq to check if velocity cmds arrive  periodically
+period = 1.0/frequency;
+ros::Timer timer = node.createTimer(ros::Duration(period),&timerClb);
 
      ros::Subscriber sub = node.subscribe("humidity", 1, alarmCallback);
      alarm_pub = node.advertise<srv_msgs::emergency_alarm>("emergency_alarm", 1);
-     // we publish a topic 'emergency' which is a message type srv_msg::emergency_alarm through the object publisher alarm_pub
-     ros::spin(); // enters in a infinite loop waiting for message humidity and
-     // calls the callback function if one arrives
+     /** Publish a topic 'emergency' which is a message type srv_msg::emergency_alarm through the object publisher alarm_pub */
+     ros::spin(); /** enters in a infinite loop waiting for message humidity and
+      calls the callback function if one arrives */
   
+
+
     return 0;
   }
   
