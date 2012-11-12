@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/alarm</url>
   <depend package="std_msgs"/>
-  <depend package="srv_msgs"/>
+  <depend package="auv_sensor_msgs"/>
   <depend package="rospy"/>
   <depend package="roscpp"/>
 
