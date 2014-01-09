@@ -7,4 +7,5 @@ catkin_package()
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(alarm src/alarm.cpp)
+add_dependencies(alarm auv_sensor_msgs_gencpp)
 target_link_libraries(alarm ${catkin_LIBRARIES})
